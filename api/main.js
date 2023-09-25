@@ -372,7 +372,12 @@ app.get("/*", async (req, res) => {
 
     // 注：
     // path 起始字符为 /
+    /*Test*/
+    if(path == "/"){
+        path = "/about"
+    }
 
+    /*End Test*/
     var result = await MunakaDatabaseFunctions.searchLink(path)
     if (result.length == 0) {
 
