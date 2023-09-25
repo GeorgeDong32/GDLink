@@ -12,8 +12,8 @@ const request = require('request');
 const mongodbUrl = process.env.mongodbUrl || undefined // 获取环境变量
 const AdminSession = process.env.AdminSession || undefined // 获取环境变量
 const linkLen = process.env.linkLen || 10 // 如未指定链接长度则默认为10
-const { mongodbDB } = process.env || 'Muaca' // 如未指定数据库则默认为 Muaca
-const { mongodbCollection } = process.env || 'Links' // 如未指定集合则默认为 Links
+const {mongodbDB} = process.env || 'Muaca' // 如未指定数据库则默认为 Muaca
+const {mongodbCollection} = process.env || 'Links' // 如未指定集合则默认为 Links
 
 
 let database = null // 数据库 Client
@@ -29,13 +29,13 @@ class MunakaDatabaseFunctionsClass {
             let collection = database.collection(mongodbCollection)
             let result = await collection.find({ path: path }).toArray()
 
-            if (enableCache == true && path != "/_test") {
+            if (enableCache == true) {
                 cache[path] = result // 将结果存入缓存
             }
 
             return result
         } else {
-            console.log(path + " 命中缓存")
+            console.log(path+" 命中缓存")
             return cache[path]
         }
     }
@@ -56,13 +56,13 @@ class MunakaDatabaseFunctionsClass {
                 var thisPath = randomString(linkLen)
                 var searchResult = await this.searchLink(thisPath)
                 if (searchResult.length == 0 && isNotDisablePath(thisPath) == true) {
-                    path = "/" + thisPath
+                    path = "/"+thisPath
                     break
                 }
             }
         } else {
 
-            if (path[0] != "/") {
+            if (path[0]!="/") {
                 path = "/" + path
             }
 
@@ -73,7 +73,7 @@ class MunakaDatabaseFunctionsClass {
         }
         let collection = database.collection(mongodbCollection)
         let result = await collection.insertOne({ creater: creater, path: path, to: to })
-
+        
         if (result.insertedId != undefined) {
 
             if (enableCache == true) {
@@ -103,10 +103,10 @@ class MunakaDatabaseFunctionsClass {
 
         return result
     }
-    async editLink(path, newPath) {
+    async editLink(path,newPath) {
         var data = await this.searchLink(path)
         await this.deleteLink(path)
-        await this.createLink(data[0].creater, path, newPath)
+        await this.createLink(data[0].creater,path,newPath)
         return true
     }
     async auth(session) { // 如需修改权限验证方式请修改此函数
@@ -114,20 +114,20 @@ class MunakaDatabaseFunctionsClass {
         switch (session.type) {
             case "session":
                 if (session.session == AdminSession) {
-                    return { "username": session.session }
+                    return {"username":session.session}
                 } else {
                     return false
-                }
+                } 
             default:
                 return false
         }
     }
-    async getLinkList(page, pageSize, other) {
+    async getLinkList(page, pageSize,other) {
 
         if (other == undefined) {
-            var flll = {}
+            var flll = { }
         } else {
-            var flll = { $and: [JSON.parse(other)] }
+            var flll = { $and:[JSON.parse(other)] }
         }
 
         try {
@@ -135,15 +135,15 @@ class MunakaDatabaseFunctionsClass {
             // 分页
             let database = await db_connect()
             let collection = database.collection(mongodbCollection)
-            let result = await collection.find(flll).sort({ _id: -1 }).skip(page * pageSize).limit(pageSize).toArray()
+            let result = await collection.find(flll).sort({_id:-1}).skip(page * pageSize).limit(pageSize).toArray()
 
             // 获取总页数
             let count = await collection.countDocuments(flll)
             let pageCount = Math.ceil(count / pageSize)
 
-            return { "pageCount": pageCount, "list": result }
+            return {"pageCount":pageCount,"list":result}
         } catch (error) {
-            return { "error": "Internal Server Error" }
+            return {"error":"Internal Server Error"}
         }
     }
 }
@@ -155,11 +155,11 @@ const MunakaDatabaseFunctions = new MunakaDatabaseFunctionsClass()
 
 function randomString(len) {
     len = len || 32;
-    var $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+    var $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'; 
     var maxPos = $chars.length;
     var result = '';
     for (i = 0; i < len; i++) {
-        result += $chars.charAt(Math.floor(Math.random() * maxPos));
+    result += $chars.charAt(Math.floor(Math.random() * maxPos));
     }
     return result;
 }
@@ -180,9 +180,9 @@ async function db_connect() {
             var collections = await database.listCollections().toArray()
             if (collections.find((item) => item.name === mongodbCollection) == undefined) {
                 await database.createCollection(mongodbCollection)
-                console.log("Created collection " + mongodbCollection)
+                console.log("Created collection "+mongodbCollection)
             } else {
-                console.log("Collection " + mongodbCollection + " already exists")
+                console.log("Collection "+mongodbCollection+" already exists")
             }
 
         } catch (error) {
@@ -255,7 +255,7 @@ app.get("/admin/api/*", async (req, res) => {
         // auth
         var authResult = await MunakaDatabaseFunctions.auth(session)
     }
-
+    
     if (authResult == false) {
         switch (apiPath) {
             case "/admin/api/Oauth":
@@ -264,27 +264,41 @@ app.get("/admin/api/*", async (req, res) => {
                 switch (type) {
 
                     default:
-                        res.status(400).json({ "error": "Unknown type" })
+                        res.status(400).json({"error":"Unknown type"})
                         return
                 }
             default:
-                res.status(401).json({ "error": "Unauthorized" })
+                res.status(401).json({"error":"Unauthorized"})
                 return
         }
     } else {
         switch (apiPath) {
             case "/admin/api/create":
-                if (to == undefined) {
-                    res.status(400).json({ "error": "Bad Request" })
+
+                if (path != undefined) {
+                        const buffPath = Buffer.from(path, 'base64');
+                    path = buffPath.toString('utf-8')
+                }
+
+
+                // 使用正则匹配 path，仅允许字母数字连字符及下横线和斜杠
+                
+                const pattern = /^[a-zA-Z0-9_\-/.]*$/;
+
+                if (to == undefined || pattern.test(path) == false) {
+                    res.status(400).json({"error":"The path or url format is illegal. The custom path only allows English letters(a-z,A,Z), Arabic numerals(0-9), slashes(/), hyphens(-), dots(.) and underscores(_)."})
                     return
                 } else {
+                    const buffTo = Buffer.from(to, 'base64');
+                    to = buffTo.toString('utf-8');
+
                     var result = await MunakaDatabaseFunctions.createLink(authResult.username, path, to)
                     if (result == false) {
-                        res.status(500).json({ "error": "Internal Server Error" })
+                        res.status(500).json({"error":"Internal Server Error"})
                         return
                     } else {
                         if (result == "Path already exists") {
-                            res.status(409).json({ "error": "Path already exists" })
+                            res.status(409).json({"error":"Path already exists"})
                             return
                         } else {
                             res.status(200).json({ path: result })
@@ -294,19 +308,19 @@ app.get("/admin/api/*", async (req, res) => {
                 }
             case "/admin/api/delete":
                 if (path == undefined) {
-                    res.status(400).json({ "error": "Bad Request" })
+                    res.status(400).json({"error":"Bad Request"})
                     return
                 } else {
                     var result = await MunakaDatabaseFunctions.deleteLink(path)
                     if (result == false) {
-                        res.status(500).json({ "error": "Internal Server Error" })
+                        res.status(500).json({"error":"Internal Server Error"})
                         return
                     } else {
                         if (result.deletedCount == 0) {
-                            res.status(404).json({ "error": "Link not found" })
+                            res.status(404).json({"error":"Link not found"})
                             return
                         } else {
-                            res.status(200).json({ "status": "OK" })
+                            res.status(200).json({"status":"OK"})
                             return
                         }
                     }
@@ -317,34 +331,38 @@ app.get("/admin/api/*", async (req, res) => {
                 var other = req.query.other
 
                 if (page == undefined || pageSize == undefined) {
-                    res.status(400).json({ "error": "Bad Request" })
+                    res.status(400).json({"error":"Bad Request"})
                     return
                 } else {
-                    var result = await MunakaDatabaseFunctions.getLinkList(page, pageSize, other)
+                    var result = await MunakaDatabaseFunctions.getLinkList(page, pageSize,other)
                     res.status(200).json(result)
                     return
                 }
             case "/admin/api/edit":
                 var newPath = req.query.newPath
                 if (path == undefined || newPath == undefined) {
-                    res.status(400).json({ "error": "Bad Request" })
+                    res.status(400).json({"error":"Bad Request"})
                     return
                 } else {
-                    await MunakaDatabaseFunctions.editLink(path, newPath)
-                    res.status(200).json({ "status": "OK" })
+
+                    const buffTo = Buffer.from(newPath, 'base64');
+                    newPath = buffTo.toString('utf-8')
+
+                    await MunakaDatabaseFunctions.editLink(path,newPath)
+                    res.status(200).json({"status":"OK"})
                     return
                 }
             case "/admin/api/auth":
-                res.status(200).json({ "status": "OK", "username": authResult.username })
+                res.status(200).json({"status":"OK","username":authResult.username})
                 return
             default:
-                res.status(404).json({ "error": "API not found" })
+                res.status(404).json({"error":"API not found"})
                 return
         }
     }
 })
 
-app.get("/?", async (req, res) => {
+app.get("/*", async (req, res) => {
     // 获取请求开始时间戳
     let startTime = new Date().getTime()
 
@@ -361,7 +379,7 @@ app.get("/?", async (req, res) => {
         // 获取请求结束时间戳
         let endTime = new Date().getTime()
         let costTime = endTime - startTime
-        console.log("Cost " + costTime + "ms")
+        console.log("Cost "+costTime+"ms")
 
 
 
@@ -373,7 +391,7 @@ app.get("/?", async (req, res) => {
         // 获取请求结束时间戳
         let endTime = new Date().getTime()
         let costTime = endTime - startTime
-        console.log("Cost " + costTime + "ms")
+        console.log("Cost "+costTime+"ms")
 
         // 302 重定向
         res.status(302).setHeader("Location", result[0].to)
