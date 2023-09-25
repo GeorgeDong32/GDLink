@@ -31,11 +31,8 @@
                 <h1 class="display-6 fw-bold mb-4">Create</h1>
                 <p class="mb-4" style="font-size: 1.6rem;padding-top: 0px;margin-top: -15px;">Create a short link</p>
                 <form>
-                    <div class="input-group"><span class="input-group-text" style="width: 76px;">Path</span><input
-                            class="form-control" type="text" placeholder="Available empty" id="path_input"></div>
-                    <div class="input-group"><span class="input-group-text" style="width: 76px;">URL</span><input
-                            class="form-control" type="text" placeholder="Long URL" id="longUrl_input"><a
-                            class="btn btn-primary" role="button" href="javascript:Shorten()">Shorten it</a></div>
+                    <div class="input-group"><span class="input-group-text" style="width: 76px;">Path</span><input class="form-control" type="text" placeholder="Optional" id="path_input"></div>
+                    <div class="input-group"><span class="input-group-text" style="width: 76px;">URL</span><input class="form-control" type="text" placeholder="http(s)://" id="longUrl_input"><a class="btn btn-primary" role="button" href="javascript:Shorten()">Shorten it</a></div>
                 </form>
             </div>
             <div class="text-center" style="margin-top: 25px;"><code class="text-center" style="font-size: 18px;"
@@ -49,11 +46,11 @@
                     </svg></a></div>
         </div>
     </section>
-    <footer>
-        <div class="text-muted d-flex justify-content-between align-items-center pt-3">
-            <p class="mb-0">Copyright © 2023 <a href="https://go.muna.uk/qhssv">Magic Link</a> by <a
+    <footer> 
+       
+            <p style="text-align: center; padding-bottom: 0.5rem" class="mb-0">Copyright © 2023 <a href="https://go.muna.uk/qhssv">Magic Link</a> by <a
                     href="https://go.muna.uk/UCYcO">芙桜竹</a>(base)<br>Copyright © 2023 <a href="https://github.com/GeorgeDong32/GDLink">GD Link</a> by <a href="https://github.com/GeorgeDong32">GeorgeDong32</a></p>
-        </div>
+
     </footer>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/js/startup-modern.js"></script>
@@ -76,13 +73,12 @@
 
         if (path == undefined) {
             pathAdd = ''
+        } else {
+            pathAdd = '&path=' + btoa(path)
         }
-        else {
-            pathAdd = '&path=' + path
-        }
-
         var settings = {
-            "url": url + "/admin/api/create?session=" + session + "&to=" + to + pathAdd,
+            "url": url+"/admin/api/create?session="+session+"&to="+btoa(to)+pathAdd,
+
             "method": "GET",
             "timeout": 0,
             async: false,
@@ -94,7 +90,7 @@
                 } else {
                     // 获取返回信息
                     var msg = xhr.responseText;
-                    msg = msg.error
+                    msg = JSON.parse(msg).error
                     alert(msg)
                 }
             }
@@ -117,6 +113,12 @@
 
     function Shorten() {
         var to = $('#longUrl_input').val()
+
+        if (to == '') {
+            alert("Long link can't be empty.")
+            return;
+        }
+
         var path = $('#path_input').val()
         if (path == '') {
             path = undefined
